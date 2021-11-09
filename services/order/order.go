@@ -1,14 +1,12 @@
-// Package services holds all the services that connects repositories into a business flow
-package services
+package order
 
 import (
 	"context"
-	"github.com/cwww3/ddd-go/aggregate"
-	"github.com/cwww3/ddd-go/domain/customer"
-	"github.com/cwww3/ddd-go/domain/customer/memory"
-	"github.com/cwww3/ddd-go/domain/customer/mongo"
-	"github.com/cwww3/ddd-go/domain/product"
-	prodmemory "github.com/cwww3/ddd-go/domain/product/memory"
+	"github.com/cwww3/tavern/domain/customer"
+	"github.com/cwww3/tavern/domain/customer/memory"
+	"github.com/cwww3/tavern/domain/customer/mongo"
+	"github.com/cwww3/tavern/domain/product"
+	prodmemory "github.com/cwww3/tavern/domain/product/memory"
 	"github.com/google/uuid"
 	"log"
 )
@@ -56,7 +54,7 @@ func WithMemoryCustomerRepository() OrderConfiguration {
 }
 
 // WithMemoryProductRepository adds a in memory product repo and adds all input products
-func WithMemoryProductRepository(products []aggregate.Product) OrderConfiguration {
+func WithMemoryProductRepository(products []product.Product) OrderConfiguration {
 	return func(os *OrderService) error {
 		// Create the memory repo, if we needed parameters, such as connection strings they could be inputted here
 		pr := prodmemory.New()
@@ -94,7 +92,7 @@ func (o *OrderService) CreateOrder(customerID uuid.UUID, productIDs []uuid.UUID)
 	}
 
 	// Get each Product, Ouchie, We need a ProductRepository
-	var products []aggregate.Product
+	var products []product.Product
 	var price float64
 	for _, id := range productIDs {
 		p, err := o.products.GetByID(id)
@@ -107,4 +105,20 @@ func (o *OrderService) CreateOrder(customerID uuid.UUID, productIDs []uuid.UUID)
 	// All Products exists in store, now we can create the order
 	log.Printf("Customer: %s has ordered %d products", c.GetID(), len(products))
 	return price, nil
+}
+
+
+// AddCustomer will add a new customer and return the customerID
+func (o *OrderService) AddCustomer(name string) (uuid.UUID, error) {
+	c, err := customer.NewCustomer(name)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	// Add to Repo
+	err = o.customers.Add(c)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return c.GetID(), nil
 }

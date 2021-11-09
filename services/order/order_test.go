@@ -1,25 +1,27 @@
-package services
+package order
 
 import (
-	"github.com/cwww3/ddd-go/aggregate"
+	"github.com/cwww3/tavern/domain/customer"
+	"github.com/cwww3/tavern/domain/product"
+	"github.com/cwww3/tavern/services/tavern"
 	"github.com/google/uuid"
 	"testing"
 )
 
-func init_products(t *testing.T) []aggregate.Product {
-	beer, err := aggregate.NewProduct("Beer", "Healthy Beverage", 1.99)
+func init_products(t *testing.T) []product.Product {
+	beer, err := product.NewProduct("Beer", "Healthy Beverage", 1.99)
 	if err != nil {
 		t.Error(err)
 	}
-	peenuts, err := aggregate.NewProduct("Peenuts", "Healthy Snacks", 0.99)
+	peenuts, err := product.NewProduct("Peenuts", "Healthy Snacks", 0.99)
 	if err != nil {
 		t.Error(err)
 	}
-	wine, err := aggregate.NewProduct("Wine", "Healthy Snacks", 0.99)
+	wine, err := product.NewProduct("Wine", "Healthy Snacks", 0.99)
 	if err != nil {
 		t.Error(err)
 	}
-	products := []aggregate.Product{
+	products := []product.Product{
 		beer, peenuts, wine,
 	}
 	return products
@@ -39,7 +41,7 @@ func TestOrder_NewOrderService(t *testing.T) {
 	}
 
 	// Add Customer
-	cust, err := aggregate.NewCustomer("Percy")
+	cust, err := customer.NewCustomer("Percy")
 	if err != nil {
 		t.Error(err)
 	}
@@ -74,17 +76,12 @@ func Test_MongoTavern(t *testing.T) {
 		t.Error(err)
 	}
 
-	tavern, err := NewTavern(WithOrderService(os))
+	tavern, err := tavern.NewTavern(tavern.WithOrderService(os))
 	if err != nil {
 		t.Error(err)
 	}
 
-	cust, err := aggregate.NewCustomer("Percy")
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = os.customers.Add(cust)
+	uid,err := os.AddCustomer("Percy")
 	if err != nil {
 		t.Error(err)
 	}
@@ -92,7 +89,7 @@ func Test_MongoTavern(t *testing.T) {
 		products[0].GetID(),
 	}
 	// Execute Order
-	err = tavern.Order(cust.GetID(), order)
+	err = tavern.Order(uid, order)
 	if err != nil {
 		t.Error(err)
 	}

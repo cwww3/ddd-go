@@ -1,4 +1,4 @@
-module github.com/cwww3/ddd-go
+module github.com/cwww3/tavern
 
 go 1.16
 
